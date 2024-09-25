@@ -2021,8 +2021,9 @@ local function _run_connection_from_origin(connection)
     backend_log.warn("Connection", connection.name, "failed to run: origin peripheral is missing.")
     return
   end
-
-  local inv_contents = inv.list and inv.list()
+  --Also try .items() for compatibility with certain custom inventories (e.g, the Create basin)
+  local inv_contents = (inv.list and inv.list()) or
+                       (peripheral.hasType(inv, "item_storage") and inv.items and inv.items())
   local inv_tanks = inv.tanks and inv.tanks()
 
   -- If the inventory is empty, we can't do anything.
@@ -2316,7 +2317,7 @@ local function _run_connection_impl(connection)
     backend_log.error("Connection", connection.name, "could not be run: origin peripheral is missing.")
   end
 
-  backend_log.error("Connection", connection.name, "could not be run: could not select a valid path. Consider using a buffer chest.")
+  backend_log.error("Connection", connection.name, "could not be run: could not select a valid path. Consider using a buffer inventory.")
 end
 
 --- Run the rules of a connection.
@@ -2356,11 +2357,8 @@ local function backend()
 end
 
 local function frontend()
-  while true do
-    if main_menu() then
-      return
-    end
-  end
+  -- Repeat until main menu exited
+  repeat until main_menu()
 end
 
 local ok, err = xpcall(function()
